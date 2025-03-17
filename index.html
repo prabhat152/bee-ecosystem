@@ -3,47 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beehive Ecosystem Knowledge Graph</title>
+    <title>Beehive Knowledge Graph</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .link { stroke: #999; stroke-opacity: 0.6; }
-        .node { stroke: #fff; stroke-width: 1.5px; }
-        .label { font-size: 12px; font-family: sans-serif; fill: black; }
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        svg {
+            width: 100vw;
+            height: 100vh;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.8;
+            stroke-width: 2;
+            marker-end: url(#arrow);
+        }
+        .node text {
+            font-size: 14px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-
-    <h2>Beehive Ecosystem Knowledge Graph</h2>
-    <svg width="900" height="600"></svg>
-
+    <svg></svg>
     <script>
         const nodes = [
-            { id: "Queen Bee", color: "yellow" },
-            { id: "Worker Bee", color: "yellow" },
-            { id: "Drone Bee", color: "yellow" },
-            { id: "Hive", color: "green" },
-            { id: "Honeycomb", color: "green" },
-            { id: "Pollen", color: "red" },
-            { id: "Nectar", color: "red" },
-            { id: "Egg", color: "yellow" },
-            { id: "Larva", color: "yellow" },
-            { id: "Pupa", color: "yellow" },
-            { id: "Foraging", color: "green" },
-            { id: "Flower", color: "red" },
-            { id: "Tree", color: "green" },
-            { id: "Pesticides", color: "red" },
-            { id: "Beekeeper", color: "green" },
-            { id: "Smoke", color: "red" },
-            { id: "Hive Entrance", color: "green" },
-            { id: "Wax", color: "green" },
-            { id: "Bee Dance", color: "yellow" },
-            { id: "Honey", color: "green" },
-            { id: "Predator", color: "red" },
-            { id: "Mite", color: "red" },
-            { id: "Sun", color: "green" },
-            { id: "Water", color: "blue" },
-            { id: "Bee Suit", color: "green" }
+            { id: "Queen Bee", group: "yellow" },
+            { id: "Worker Bee", group: "yellow" },
+            { id: "Drone Bee", group: "yellow" },
+            { id: "Hive", group: "green" },
+            { id: "Honeycomb", group: "green" },
+            { id: "Pollen", group: "red" },
+            { id: "Nectar", group: "red" },
+            { id: "Egg", group: "yellow" },
+            { id: "Larva", group: "yellow" },
+            { id: "Pupa", group: "yellow" },
+            { id: "Foraging", group: "green" },
+            { id: "Flower", group: "red" },
+            { id: "Tree", group: "green" },
+            { id: "Pesticides", group: "red" },
+            { id: "Beekeeper", group: "green" },
+            { id: "Smoke", group: "red" },
+            { id: "Hive Entrance", group: "green" },
+            { id: "Wax", group: "green" },
+            { id: "Bee Dance", group: "yellow" },
+            { id: "Honey", group: "green" },
+            { id: "Predator", group: "red" },
+            { id: "Mite", group: "red" },
+            { id: "Sun", group: "green" },
+            { id: "Water", group: "blue" },
+            { id: "Bee Suit", group: "green" }
         ];
 
         const links = [
@@ -64,62 +75,85 @@
             { source: "Hive", target: "Drone Bee", label: "houses" },
             { source: "Hive", target: "Egg", label: "houses" },
             { source: "Predator", target: "Hive", label: "attacks" },
-            { source: "Mite", target: "Worker Bee", label: "infests" },
+            { source: "Mite", target: "Bee", label: "infests" },
             { source: "Pesticides", target: "Flower", label: "contaminates" },
-            { source: "Pesticides", target: "Worker Bee", label: "harms" },
+            { source: "Pesticides", target: "Bee", label: "harms" },
             { source: "Sun", target: "Flower", label: "helps grow" },
             { source: "Water", target: "Flower", label: "helps grow" },
             { source: "Beekeeper", target: "Hive", label: "manages" },
             { source: "Beekeeper", target: "Bee Suit", label: "wears" },
             { source: "Beekeeper", target: "Smoke", label: "uses" },
-            { source: "Smoke", target: "Worker Bee", label: "calms" }
+            { source: "Smoke", target: "Bee", label: "calms" }
         ];
 
-        const width = 900, height = 600;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
         const svg = d3.select("svg");
+
+        // Add arrowhead marker for link direction
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 20)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#999");
+
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+            .force("charge", d3.forceManyBody().strength(-400))
             .force("center", d3.forceCenter(width / 2, height / 2));
 
-        const link = svg.selectAll("line")
+        const link = svg.selectAll(".link")
             .data(links)
             .enter().append("line")
             .attr("class", "link");
 
-        const node = svg.selectAll("circle")
+        const linkText = svg.selectAll(".link-text")
+            .data(links)
+            .enter().append("text")
+            .attr("font-size", "12px")
+            .attr("fill", "#555")
+            .text(d => d.label);
+
+        const node = svg.selectAll(".node")
             .data(nodes)
             .enter().append("circle")
             .attr("r", 10)
-            .attr("fill", d => d.color)
+            .attr("fill", d => d.group)
             .call(d3.drag()
                 .on("start", dragStarted)
                 .on("drag", dragged)
                 .on("end", dragEnded));
 
-        const labels = svg.selectAll("text")
+        const nodeText = svg.selectAll(".node-text")
             .data(nodes)
             .enter().append("text")
-            .attr("class", "label")
+            .attr("font-size", "14px")
             .attr("dx", 12)
-            .attr("dy", ".35em")
+            .attr("dy", 4)
             .text(d => d.id);
 
-        function ticked() {
-            link
-                .attr("x1", d => d.source.x)
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x)
                 .attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x)
                 .attr("y2", d => d.target.y);
 
-            node
-                .attr("cx", d => d.x)
+            linkText.attr("x", d => (d.source.x + d.target.x) / 2)
+                .attr("y", d => (d.source.y + d.target.y) / 2);
+
+            node.attr("cx", d => d.x)
                 .attr("cy", d => d.y);
 
-            labels
-                .attr("x", d => d.x)
-                .attr("y", d => d.y);
-        }
+            nodeText.attr("x", d => d.x + 12)
+                .attr("y", d => d.y + 4);
+        });
 
         function dragStarted(event, d) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -137,9 +171,6 @@
             d.fx = null;
             d.fy = null;
         }
-
-        simulation.on("tick", ticked);
     </script>
-
 </body>
 </html>
